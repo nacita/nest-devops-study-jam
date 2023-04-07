@@ -45,7 +45,7 @@ user@hostname:~$
 1. sudo
 2. pwd
 3. cd
-4. Is
+4. ls
 5. cat
 6. cp
 7. mv
@@ -259,6 +259,8 @@ call plug#end()
 
 - jika proses instalasi sudah selesai, jalankan dengan mengetikkan :NERDTree
 
+
+
 ## Upgrade Ubuntu 
 
 - Upgrade 20.04 LTS ke 22.04 LTS 
@@ -283,6 +285,9 @@ sudo reboot
 - catat jika diperlukan versi Ubuntu & kernel saat ini
 uname -mrs
 lsb_release -a
+
+- gunakan tmux sebelum melakukan upgrade
+tmux
 
 - lakukan proses upgrade ke Ubuntu 22.04 (jangan lupa maksimalkan jendela terminal)
 sudo do-release-upgrade
