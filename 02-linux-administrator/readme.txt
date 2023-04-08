@@ -155,13 +155,13 @@ sudo apt install php8.1 php8.1-{fpm,gd,mbstring,mcrypt,mysql,odbc,common,soap,xm
 # jika ada pertanyaan "which sevice should be restarted?" pilih No/Cancel
 
 # install composer
-wget https://github.com/composer/composer/releases/download/2.5.1/composer.phar -O /usr/bin/composer
-chmod +x /usr/bin/composer
+sudo wget https://github.com/composer/composer/releases/download/2.5.1/composer.phar -O /usr/bin/composer
+sudo chmod +x /usr/bin/composer
 
 # Buat user project dengan directory /var/www/project dan ubah shell ke /bin/false
 sudo useradd -m -d /var/www/project -s /bin/false project
 
-# Buat password
+# Buat password (skip aja)
 sudo passwd project
 
 # untuk berpindah ke user project
@@ -179,18 +179,18 @@ sudo cp www.conf project.conf
 # edit berkas project.conf
 #line 4
 [project] 
-#line 23 dan 24
+#line 28 dan 29
 user = project
 group = project 
-#line 33
+#line 41
 listen = /run/php/php8.1-project.sock 
-#line 48 dan 49
-llisten.owner = project 
+#line 53 dan 54
+listen.owner = project 
 listen.group = project 
 
 # simpan, lalu restart php-fpm
-systemctl restart php8.1-fpm
-systemctl status php8.1-fpm
+sudo systemctl restart php8.1-fpm
+sudo systemctl status php8.1-fpm
 
 ## update konfigurasi nginx
 # edit file `nginx.conf` pada directory `/etc/nginx/nginx.conf`pada line 1 dengan 
@@ -200,19 +200,33 @@ user www-data project;
 sudo nginx -t
 sudo systemctl restart nginx
 
-## cek php
-# buat sebuah file info.php di /usr/share/nginx/html/ 
-sudo vim /usr/share/nginx/html/info.php
+## pastikan php berjalan dengan nginx
+
+# untuk berpindah ke user project
+sudo su - -s /bin/bash project
+
+# buat sebuah file info.php di /var/www/project/latihan1 
+mkdir latihan1
+vim latihan1/info.php
 
 # dengan isi sebagai berikut
 <?php
 phpinfo();
 ?>
 
-# simpan, lalu akses melalui browser http://ip-server/info.php
+# keluar dari user project
+exit
+
+# seting proxy di browser, silakan baca panduan yang sempat saya tulis di sini 
+# --> https://wiki.samsul.web.id/linux/Cara.Akses.Jaringan.Privat.dengan.SSH.Tunnel.dan.Firefox
+
+# selanjutnya pointing lokal DNS dengan /etc/hosts, panduannya juga saya tulis di wiki
+# --> https://wiki.samsul.web.id/linux/Lokal.DNS.dengan/etc/hosts
+
+# simpan, lalu akses melalui browser http://php.nacita.ok/info.php
 
 # atau melalui curl di terminal server
-curl http://localhost/info.php
+curl http://php.nacita.ok/info.php
 
 
 
@@ -330,12 +344,6 @@ sudo ln -s /etc/nginx/sites-available/wp-[nama]
 # berikutnya restart nginx
 sudo nginx -t
 sudo systemct restart nginx
-
-# seting proxy di browser, silakan baca panduan yang sempat saya tulis di sini 
-# --> https://wiki.samsul.web.id/linux/Cara.Akses.Jaringan.Privat.dengan.SSH.Tunnel.dan.Firefox
-
-# selanjutnya pointing lokal DNS dengan /etc/hosts, panduannya juga saya tulis di wiki
-# --> https://wiki.samsul.web.id/linux/Lokal.DNS.dengan/etc/hosts
 
 # buka melalui browser, dan akses  http://wordpress.nacita.ok
 
