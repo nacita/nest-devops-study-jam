@@ -12,10 +12,10 @@ sudo add-apt-repository ppa:ondrej/php -y
 sudo apt update 
 
 
+
 #############################
 ## 1. Instalasi MariaDB    ##
 #############################
-
 
 ## install MariaDB 
 
@@ -45,6 +45,7 @@ flush privileges;
 
 # keluar dari prompt dengan mengetikkan \q
 # database siap digunakan
+
 
 
 #####################################
@@ -128,7 +129,6 @@ server {
     }
     
     include /etc/nginx/snippets/security.conf;
-
 }
 
 
@@ -139,8 +139,9 @@ ln -s /etc/nginx/sites-available/project-[nama]
 
 
 # berikutnya restart nginx
-
 systemct restart nginx
+
+
 
 #############################
 ## 3. PHP & PHP-FPM        ##
@@ -192,21 +193,27 @@ systemctl status php8.1-fpm
 
 ## update konfigurasi nginx
 # edit file `nginx.conf` pada directory `/etc/nginx/nginx.conf`pada line 1 dengan 
-
 user www-data project;
 
 # simpan, lalu restart nginx
-nginx -t
-systemctl restart nginx
+sudo nginx -t
+sudo systemctl restart nginx
 
 ## cek php
-# buat sebuah file index.php di /var/www/project/latihan1 dengan isi sebagai berikut
+# buat sebuah file info.php di /usr/share/nginx/html/ 
+sudo vim /usr/share/nginx/html/info.php
 
+# dengan isi sebagai berikut
 <?php
 phpinfo();
 ?>
 
-# simpan, lalu akses melalui browser 
+# simpan, lalu akses melalui browser http://ip-server/info.php
+
+# atau melalui curl di terminal server
+curl http://localhost/info.php
+
+
 
 #############################
 ## 4. Instalasi WordPress  ##
@@ -231,14 +238,28 @@ wget https://wordpress.org/latest.tar.gz -O wordpress.tar.gz
 # ekstrak 
 tar -xvzf wordpress.tar.gz
 
+# edit/buat file wp-config.php
+cp wp-config-sample.php wp-config.php
+vim wp-config.php
+
+# sesuaikan variabel berikut
+define( 'DB_NAME', 'database_name_here' );
+
+/** Database username */
+define( 'DB_USER', 'username_here' );
+
+/** Database password */
+define( 'DB_PASSWORD', 'password_here' );
+
+/** Database hostname */
+define( 'DB_HOST', 'localhost' );
+
+# buka browser dan buka tautan berikut: https://api.wordpress.org/secret-key/1.1/salt/
+# salin teks yang muncul, lalu tempel/ganti di berkas yang sama mulai baris 51
+
 
 # keluar dari user project
 exit
-
-
-
-
-
 
 
 # buat konfigurasi virtualhost nginx
@@ -296,7 +317,6 @@ server {
     }
     
     include /etc/nginx/snippets/security.conf;
-
 }
 
 
@@ -310,10 +330,13 @@ sudo ln -s /etc/nginx/sites-available/wp-[nama]
 sudo nginx -t
 sudo systemct restart nginx
 
+# seting proxy di browser, silakan baca panduan yang sempat saya tulis di sini 
+# --> https://wiki.samsul.web.id/linux/Cara.Akses.Jaringan.Privat.dengan.SSH.Tunnel.dan.Firefox
 
+# selanjutnya pointing lokal DNS dengan /etc/hosts, panduannya juga saya tulis di wiki
+# --> https://wiki.samsul.web.id/linux/Lokal.DNS.dengan/etc/hosts
 
-
-
+# buka melalui browser, dan akses  http://wordpress.nacita.ok
 
 
 
@@ -322,8 +345,11 @@ sudo systemct restart nginx
 ## 5. Instalasi Laravel    ##
 #############################
 
+## Tugas: buat DB baru, user & passwordnya juga
 
 ## Deploy laravel
+# berpindah ke user project, lagi
+sudo su - -s /bin/bash project
 
 # masuk ke directory root nginx 
 cd /var/www/project
@@ -333,21 +359,79 @@ cd /var/www/project
 git clone https://github.com/rappasoft/laravel-boilerplate.git
 cd laravel-boilerplate
 
-# update file laravel agar bisa digunakan
+# install dependency laravel agar dapat digunakan karena laravel membutuhkannya
+composer install
 
-composer update
-
-# copy berkas .env.example ke .env
-
+# salin berkas .env.example ke .env
 cp .env.example .env
 
-# edit file `.env`, sesuaikan konfigurasinya
+# edit file .env, sesuaikan konfigurasinya
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel_samsul
+DB_USERNAME=laravel_user
+DB_PASSWORD=laravel_password
+
+# jalankan perintah berikut setiap kali memodifikasi berkas .env
+php artisan config:cache
 
 # generate key laravel
-
 php artisan key:generate
 
 # lakukan proses migrate database
-
 php artisan migrate
 
+# jika terdapat error saat proses migrate tadi, cek lagi credential (user/password) database
+
+# jalankan seeding database untuk membuat inisial user & password, dll
+php artisan db:seed
+
+# jalankan perintah berikut untuk melink-kan public storage 
+php artisan storage:link
+
+# keluar dari user project
+exit
+
+## buat konfigurasi virtualhost
+
+# buat berkas virtualhost di folder sites-available
+sudo vim /etc/nginx/sites-available/laravel-[nama]
+
+# tambahkan teks berikut
+server {
+    listen 80;
+    server_name laravel.nacita.ok;
+    root /var/www/project/laravel-boilerplate;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.1-project.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+    
+    include /etc/nginx/snippets/security.conf;
+
+}
+
+
+# buat symlink konfigurasi virtualhost tersebut ke /etc/nginx/sites-enabled
+
+cd /etc/nginx/sites-enabled
+sudo ln -s /etc/nginx/sites-available/laravel-[nama]
