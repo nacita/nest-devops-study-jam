@@ -98,7 +98,7 @@ location ~ /\.(?!well-known) {
 
 
 ## buat berkas virtualhost di folder sites-available
-vim /etc/nginx/sites-available/php-[nama]
+sudo nano /etc/nginx/sites-available/php-[nama]
 
 # tambahkan teks berikut
 server {
@@ -135,11 +135,12 @@ server {
 # buat symlink konfigurasi virtualhost tersebut ke /etc/nginx/sites-enabled
 
 cd /etc/nginx/sites-enabled
-ln -s /etc/nginx/sites-available/project-[nama]
+sudo ln -s /etc/nginx/sites-available/php-[nama]
 
 
 # berikutnya restart nginx
-systemct restart nginx
+sudo nginx -t
+sudo systemct restart nginx
 
 
 
@@ -170,9 +171,9 @@ sudo su - -s /bin/bash project
 exit
 
 ## php-fpm 
-# Copy file `www.conf` menjadi `project.conf` dan tambahkan code berikut untuk merubah user servie run di directory `/etc/php/php8.1.fpm/pool.d/project.conf`
-cd /etc/php/php8.1.fpm/pool.d
-cp www.conf project.conf
+# Copy file `www.conf` menjadi `project.conf` dan tambahkan code berikut untuk merubah user servie run di directory `/etc/php/8.1/fpm/pool.d/project.conf`
+cd /etc/php/8.1/fpm/pool.d
+sudo cp www.conf project.conf
 
 
 # edit berkas project.conf
