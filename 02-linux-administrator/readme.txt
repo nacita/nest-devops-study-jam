@@ -378,24 +378,26 @@ sudo systemctl restart nginx
 
 ## Cloning website wordpress
 
+# berpindah ke user project
+sudo su - -s /bin/bash project
+
 # dump database
-mysqldump -u root -p wp_samsul > wp_samsul.sql
+mysqldump -u root -p wp_[nama] > wp_[nama].sql
 
 # replace domain di db
-vim wp_samsul.sql
+vim wp_[nama].sql
 
 # find & replace dengan vim tadi
 # dalam mode command, tekan :%s/wordpress.nacita.ok/wordpress.[nama].ok/g
 # simpan & keluar
 
 # tugas: buat DB baru, impor DB tadi
-
-# berpindah ke user project
-sudo su - -s /bin/bash project
+# cara impor 
+mysql -u root -p wp_[nama]_tugas < wp_[nama].sql
 
 # Duplikat wordpress
-cp -a wordpress wp-[nama]
-cd wp-[nama]
+cp -a wordpress wp-[nama]-tugas
+cd wp-[nama]-tugas
 
 # edit wp-config.php
 # ubah konfignya
@@ -421,6 +423,15 @@ sudo nginx -t
 sudo systemctl restart nginx
 
 # buka melalui browser, dan akses  http://wordpress.[nama].ok
+
+## WP CLI 
+# install
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+php wp-cli.phar --info
+chmod +x wp-cli.phar
+sudo mv wp-cli.phar /usr/local/bin/wp
+
+# demo
 
 
 #############################
@@ -509,7 +520,6 @@ server {
     }
     
     include /etc/nginx/snippets/security.conf;
-
 }
 
 
@@ -533,7 +543,7 @@ sudo su - -s /bin/bash project
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 
 # logout & login lagi ke user project, atau reload dengan 
-. .bashrc
+. ~/.bashrc
 
 # install nodejs 
 nvm install 16
