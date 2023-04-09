@@ -12,6 +12,31 @@ sudo add-apt-repository ppa:ondrej/php -y
 sudo apt update 
 
 
+## Tmux - Terminal multiplexer
+
+## perintah perintah tmux
+# memulai tmux
+tmux
+
+# Prefix Command : Ctrl+B
+# keluar dari tmux : Ctrl+B D
+
+# masuk kembali ke tmux
+tmux a
+
+# Ctrl+B D — Detach from the current session.
+# Ctrl+B % — Split the window into two panes horizontally.
+# Ctrl+B " — Split the window into two panes vertically.
+# Ctrl+B Arrow Key (Left, Right, Up, Down) — Move between panes.
+# Ctrl+B X — Close pane.
+# Ctrl+B C — Create a new window.
+# Ctrl+B N or P — Move to the next or previous window.
+# Ctrl+B 0 (1,2...) — Move to a specific window by number.
+# Ctrl+B : — Enter the command line to type commands. Tab completion is available.
+# Ctrl+B ? — View all keybindings. Press Q to exit.
+# Ctrl+B W — Open a panel to navigate across windows in multiple sessions.
+
+# Referensi: https://www.redhat.com/sysadmin/introduction-tmux-linux
 
 #############################
 ## 1. Instalasi MariaDB    ##
@@ -72,7 +97,7 @@ gzip_proxied any;
 gzip_comp_level 6;
 gzip_buffers 16 8k;
 gzip_http_version 1.1;
-gzip_types text/plain text/css application/json application/javascript text/xm    l application/xml application/xml+rss text/javascript;
+gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
 # simpan, lalu keluar
 
@@ -336,18 +361,66 @@ server {
 
 
 # buat symlink konfigurasi virtualhost tersebut ke /etc/nginx/sites-enabled
-
 cd /etc/nginx/sites-enabled
 sudo ln -s /etc/nginx/sites-available/wp-[nama]
 
 
 # berikutnya restart nginx
 sudo nginx -t
-sudo systemct restart nginx
+sudo systemctl restart nginx
 
 # buka melalui browser, dan akses  http://wordpress.nacita.ok
 
+## toubleshooting
+# website WordPress tidak dapat digunakan untuk posting artikel
+# perbaiki dengan menyesuaikan/nonaktifkan security header
+# buat postingan baru berisi teks & gambar
 
+## Cloning website wordpress
+
+# dump database
+mysqldump -u root -p wp_samsul > wp_samsul.sql
+
+# replace domain di db
+vim wp_samsul.sql
+
+# find & replace dengan vim tadi
+# dalam mode command, tekan :%s/wordpress.nacita.ok/wordpress.[nama].ok/g
+# simpan & keluar
+
+# tugas: buat DB baru, impor DB tadi
+
+# berpindah ke user project
+sudo su - -s /bin/bash project
+
+# Duplikat wordpress
+cp -a wordpress wp-[nama]
+cd wp-[nama]
+
+# edit wp-config.php
+# ubah konfignya
+
+# keluar dari user project
+exit
+
+## config virtualhost
+cd /etc/nginx/sites-available
+sudo cp wp-[nama] wp-[nama]-tugas
+
+# edit virtualhost
+sudo vim wp-[nama]-tugas
+
+# ganti domainnya menjadi wordpress.[nama].ok
+
+# buat symlink konfigurasi virtualhost tersebut ke /etc/nginx/sites-enabled
+cd /etc/nginx/sites-enabled
+sudo ln -s /etc/nginx/sites-available/wp-[nama]-tugas
+
+# berikutnya restart nginx
+sudo nginx -t
+sudo systemctl restart nginx
+
+# buka melalui browser, dan akses  http://wordpress.[nama].ok
 
 
 #############################
@@ -405,12 +478,12 @@ exit
 ## buat konfigurasi virtualhost
 
 # buat berkas virtualhost di folder sites-available
-sudo vim /etc/nginx/sites-available/laravel-[nama]
+sudo nano /etc/nginx/sites-available/laravel-[nama]
 
 # tambahkan teks berikut
 server {
     listen 80;
-    server_name laravel.nacita.ok;
+    server_name laravel.[nama].ok;
     root /var/www/project/laravel-boilerplate;
 
     access_log /var/log/nginx/access.log;
@@ -444,3 +517,31 @@ server {
 
 cd /etc/nginx/sites-enabled
 sudo ln -s /etc/nginx/sites-available/laravel-[nama]
+
+# berikutnya restart nginx
+sudo nginx -t
+sudo systemctl restart nginx
+
+# buka melalui browser, dan akses  http://laravel.[nama].ok
+
+
+## Frontend Build
+# berpindah ke user project, lagi
+sudo su - -s /bin/bash project
+
+# install NVM 
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+
+# logout & login lagi ke user project, atau reload dengan 
+. .bashrc
+
+# install nodejs 
+nvm install 16
+
+# install package dependency dengan npm
+npm istall
+
+# lakukan proses build
+npm run build
+
+# buka kembali melalui browser, dan akses  http://laravel.[nama].ok
