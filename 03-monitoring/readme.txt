@@ -14,7 +14,8 @@
 ## 1. Install Node Exporter  ##
 ###############################
 
-## Jalankan di node1
+## Jalankan di node1, dengan mode root
+sudo -i
 
 ##1. Download Paket Node Exporter
 cd /opt
@@ -132,13 +133,13 @@ journalctl -u prometheus_server
 ##3. Mendapatkan persentase rata-rata penggunaan CPU di node1 dalam 5 menit terakhir.
 #- Pada form expression ketikkan: 100 - avg (irate(node_cpu_seconds_total{instance="ip-node1:9100",job="node-[username]",mode="idle"}[5m])) by (instance) * 100
 #- Klik button Execute
-#- Klik tab Graph. Centang stacked.
+#- Klik tab Graph.
 #B> Full screenshot dan beri nama X-nest-mon-B.png
 
 ##4. Mendapatkan persentase penggunaan memory di node0 dan node1.
 #- Pada form expression ketikkan: (node_memory_MemTotal_bytes - (node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes)) / node_memory_MemTotal_bytes * 100
 #- Klik button Execute
-#- Klik tab Graph. Centang stacked.
+#- Klik tab Graph.
 #C> Full screenshot dan beri nama X-nest-mon-C.png
 
 ##5. Masih banyak query metrics yang bisa dieksekusi. Silahkan di-explore secara mandiri.
@@ -163,7 +164,9 @@ screen -R grafana
 ##3. Gunakan browser dan akses http://ip-node2:3000/login:
 #D> Full screenshot form login Grafana dan beri nama X-nest-mon-D.png
 
-# keluar dari screen dengan Ctrl+c, lalu ketik 
+# login default dengan user admin password admin, lalu buat password baru
+
+# di terminal, keluar dari screen dengan Ctrl+c, lalu ketik
 exit
 
 ##4. Running Grafana as a service
@@ -217,7 +220,7 @@ journalctl -u grafana
 #- Klik Panel Title > Edit
 #- Tab General > Title: Uptime
 #- Tab Metrics > Data Sources: Prometheus-[username], Metrics: (time() - process_start_time_seconds{instance="ip-node1:9100",job="node-[username]"})
-#- Tab Options > Stat: Current, Unit: Seconds
+#- Tab Standard Options > Unit: Time > duration (s)
 #- Save Dashboard
 
 ##3. Buat Panel: CPU Core
@@ -255,3 +258,126 @@ journalctl -u grafana
 #- Save Dashboard
 
 #E> Full screenshot dashboard node1 dan beri nama X-nest-mon-E.png
+
+
+## Import dashboard yang sudah dibuat oleh komunitas
+# https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+
+
+################################
+##### Install AlertManager #####
+################################
+
+##### Eksekusi di node2 #####
+
+##1. Download Paket AlertManager
+cd /opt
+wget https://github.com/prometheus/alertmanager/releases/download/v0.25.0/alertmanager-0.25.0.linux-amd64.tar.gz
+tar xvfz alertmanager-0.25.0.linux-amd64.tar.gz
+
+##2. Konfigurasi AlertManager
+cd alertmanager-0.25.0.linux-amd64
+vi config.yml
+
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: [Alertname]
+  receiver: email-me
+
+receivers:
+- name: email-me
+  email_configs:
+  - to: "email1@gmail.com"
+    from: "email1@gmail.com"
+    smarthost: smtp.gmail.com:587
+    auth_username: "email1@gmail.com"
+    auth_identity: "email1@gmail.com"
+    auth_password: "password email1@gmail.com"
+    send_resolved: True
+
+##3. Running AlertManager as a Service
+vi /etc/systemd/system/alert_manager.service
+
+[Unit]
+Description=Alert Manager
+
+[Service]
+User=root
+ExecStart=/opt/alertmanager-0.25.0.linux-amd64/alertmanager --config.file=/opt/alertmanager-0.25.0.linux-amd64/config.yml --web.external-url=http://ip-node2:9093/
+
+[Install]
+WantedBy=default.target
+
+##4. Start AlertManager Service
+./amtool check-config config.yml
+systemctl daemon-reload
+systemctl enable alert_manager.service
+systemctl start alert_manager.service
+systemctl status alert_manager.service
+journalctl -u alert_manager
+
+##5. Gunakan browser dan akses URL berikut:
+#- http://ip-node2:9093/metrics
+#- http://ip-node2:9093
+#- http://ip-node2:9093/#/status
+
+##6. Buat Alert Rules
+cd /opt/prometheus-2.43.0.linux-amd64
+vi node_rules.yml
+
+groups:
+- name: node.rules
+  rules:
+  - alert: InstanceDown
+    expr: up{job="node-[username]"} == 0
+    for: 5m
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "Instance {{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+
+##7. Tambahkan berikut ke file konfigurasi Prometheus Server.
+vi config.yml
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - ip-node2:9093
+
+rule_files:
+  - "node_rules.yml"
+
+##8. Restart Prometheus Server
+./promtool check config config.yml
+systemctl restart prometheus_server
+
+# Gunakan browser dan akses URL berikut:
+# http://ip-node2:9090/config
+# http://ip-node2:9090/rules
+# http://ip-node2:9090/alerts
+
+##9. Uji Coba AlertManager
+# Shutdown node1
+# Akses http://ip-node2:9090/targets
+# Akses http://ip-node2:9090/alerts, state podX-node1 dalam keadaan PENDING.
+# Tunggu sampai state menjadi FIRING.
+# Akses http://ip-node2:9093
+# Check e-mail.
+
+#K> Jika sudah mendapat e-mail notifikasi podX-node1 firing, full screenshot e-mail dan beri nama X-do-pro-K.png
+
+# Start instance node1
+# Akses http://ip-node2:9090/targets
+# Akses http://ip-node2:9090/alerts
+# Akses http://ip-node2:9093
+# Check e-mail.
+
+#L> Jika sudah mendapat e-mail notifikasi podX-node1 resolved, full screenshot e-mail dan beri nama X-do-pro-L.png
+
+
+
+
+
+
