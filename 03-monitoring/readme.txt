@@ -1,4 +1,3 @@
-
 #############################
 ## 0. Persiapan LAB        ##
 #############################
@@ -297,6 +296,8 @@ receivers:
     auth_password: "password email1@gmail.com"
     send_resolved: True
 
+# ref: https://prometheus.io/docs/alerting/latest/configuration/
+
 ##3. Running AlertManager as a Service
 vi /etc/systemd/system/alert_manager.service
 
@@ -377,7 +378,53 @@ systemctl restart prometheus_server
 #L> Jika sudah mendapat e-mail notifikasi podX-node1 resolved, full screenshot e-mail dan beri nama X-do-pro-L.png
 
 
+### Monitoring MariaDB Server melalui Grafana
+
+## persiapkan user di MariaDB
+# login ke node1 melalui ssh, lalu edit berkas mariadb.cnf
+vim /etc/mysql/mariadb.conf.d/50-server.cnf
+
+# sunting bari berikut
+bind-address            = 127.0.0.1
+
+# menjadi
+bind-address            = 0.0.0.0
+
+# restart mariadb server
+systemctl restart mariadb
+
+# cek port 3306, pastikan listen di 0.0.0.0:3306
+ss -tulpn | grep 3306
+
+## buat user baru di mariadb dengan akses read-only
+sudo mysql
+MariaDB [(none)]> CREATE USER 'grafanareader'@'%' IDENTIFIED BY 'rahasia';
+MariaDB [(none)]> GRANT SELECT ON *.* TO 'grafanareader'@'%';
+MariaDB [(none)]> FLUSH PRIVILEGES;
+MariaDB [(none)]> \q
+
+## download & import example db
+wget https://raw.githubusercontent.com/meob/my2Collector/master/my2.sql
+sudo mysql -u root my2 < my2.sql
+
+## setup datasource 
+# login ke grafana melalui browser : http://ip-node2:3000
+# pada panel kiri pilih Configuration -> Data Source -> Add data source -> pilih MySQL
+# isikan formulir yang diminta berupa, 
+# Name: MariaDB
+# Host: ip-node1:3306
+# Database : nama_db (yang akan dimonitor)
+# User: grafanareader, Password: rahasia
+
+# kemudian klik Save & Test, pastikan dapat terhubung ke Database
 
 
 
+## import dashboard
+# buka tab baru, lalu buka https://grafana.com/grafana/dashboards/7991-2mysql-simple-dashboard/
+# klik pada Copy ID to clipboard
 
+# kembali ke grafana, 
+# pada menu dashboard, klik Import, pase ID tadi pada bagian "import via grafana.com", lalu klik tombol "Load" di sebelahnya
+
+# MySQL dashboard sudah berhasil diimport. Butuh waktu beberapa saat agar data tampil di grafana. 
