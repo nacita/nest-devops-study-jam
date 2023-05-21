@@ -109,7 +109,7 @@ sudo nano /etc/supervisor/conf.d/myapp.conf
 
 # isinya sebagai berikut
 [program:flaskapp] 
-command=/bin/bash -c 'source /var/www/project/flaskapp/flaskvenv/bin/activate; /var/www/project/.local/bin/gunicorn -w 3 --bind unix:/var/www/project/gunicorn.sock wsgi:app'
+command=/bin/bash -c 'source /var/www/project/flaskapp/flaskvenv/bin/activate; gunicorn -w 3 --bind unix:/var/www/project/gunicorn.sock wsgi:app'
 environment=APP_NAME="[username]-belajar-flask"
 directory=/var/www/project/flaskapp
 user=project
@@ -137,7 +137,7 @@ sudo nano /etc/nginx/sites-available/flaskapp.conf
 # isikan sebagai berikut
 
 upstream flask_server {
-server unix:/home/flask[username]/ipc.sock fail_timeout=0;
+server unix:/var/www/project/gunicorn.sock fail_timeout=0;
 }
 
 server {
