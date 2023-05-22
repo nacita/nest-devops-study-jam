@@ -13,7 +13,7 @@ Untuk menyelesaikan StudyJam ini, peserta harus mengerjakan beberapa task beriku
 
 - [ ] buat virtualhost untuk Grafana dengan format http://grafana.[nama].yes
 - [ ] Fork repo berikut [Flask Example App](https://github.com/samsuldemo/Flask-Example), 
-- [ ] Clone repo hasil fork https://github.com/[username]/flask-nest-api, install di node2 dan gunakan sub domain flask-example.[nama].yes
+- [ ] Clone repo hasil fork https://github.com/[username]/flask-nest-api, install di node1 dan gunakan sub domain flask-example.[nama].yes
 - [ ] Setup Jenkins pipeline untuk repo tersebut, beri nama [nama]-flask-nest
 - [ ] Buat autodeploy dari Jenkins ke server
 - [ ] Buat screenshot untuk tiap task di atas. 
