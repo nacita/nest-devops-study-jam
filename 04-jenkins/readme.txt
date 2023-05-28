@@ -190,6 +190,142 @@ sudo journalctl -f -n 300 -u jenkins
 # dapatkan initial password dari log tersebut
 # password juga bisa didapat dari berkas /var/lib/jenkins/secrets/initialAdminPassword
 
+# buka browser dan ketik http://ip-node2:8080, masukkan password tadi
+# pilih install recomended 
+# serta buat user & password untuk jenkins
+
+## install plugin
+
+# setelah berhasil login, pada panel kiri, klik Manage Jenkins, pilih Manage Plugins
+# selanjutnya, klik Available plugins, install beberapa plugin berikut:
+#- Blue Ocean
+#- Discord Notifier
+#- SSH Agent Plugin
+# centang pada bagian "Restart Jenkins when installation is complete and no jobs are running" agar jenkins otomatis direstart
+
+## buat jenkins credential
+# sebelumnya, buat dulu ssh-keypair baru. keypair ini akan kita gunakan agar dapat melakukan proses clone di dalam proses ci-cd di jenkins
+#- pada Jenkins Dashboard, klik Manage Jenkins
+#- klik pada Credentials, selanjutnya klik pada domain (globals), klik Add credentials
+#- pada kind, pilih SSH Username with private key
+#- pada bagian ID, ketikkan [username]-ssh-key
+#- pada Username, isikan username 'student' (sesuai username pada server)
+#- lalu pada private key, pilih enter directly, lalu masukkan private key yang tadi kita generate
+#- jika sudah, klik tombol Save
+
+## accept hostkey
+# nantinya untuk proses jenkins akan ada proses clone dan remote menggunakan ssh, pada saat itu akan error jika konfigurasi berikut tidak kita ubah
+#- pada Jenkins Dashboard, klik Manage Jenkins
+#- klik Configure Global Security, lalu scroll ke bagian bawah pada Git Host Key Verification Configuration 
+#- pada  Host Key Verification Strategy, pilih Accept first connection, klik Save
+
+## daftarkan public ke ke repo github
+# ada 2 opsi untuk menambahkan public key ke github, 
+#- opsi pertama: level akun, referensi --> https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account
+#- opsi kedua: level project (deploy key), referensi --> https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys#set-up-deploy-keys
+#- silakan pilih salah satu, untuk LAB ini saya rekomendasikan pilih opsi kedua.
+
+
+###############################
+## VI. Tugas Akhir StudyJam  ##
+###############################
+
+# untuk mengerjakan tugas akhir StudyJam ini, berikut beberapa script yang dapat digunakan untuk mengerjakannya:
+
+## script deploy yang dipasang di server
+
+# login ke node1, lalu pada user student, buat file deploy.sh
+
+vim /home/student/deploy.sh
+
+# isinya sebagai berikut, ubah beberapa variable yang diperlukan
+
+##### script deploy.sh start
+#!/bin/bash
+set -x
+
+app_user=project
+app_path=/var/www/project/[username]-nest-flask-ta
+log_file=/var/www/project/deploy.log
+app_repo="[URL_REPO_GITHUB]"
+
+sudo su - -s /bin/bash $app_user -c "
+touch $log_file
+# buat folder jika belum ada
+if [ ! -d $app_path ] ; then
+        echo 'Cloning repository $app_repo to  $app_path' > $log_file
+        git clone $app_repo $app_path
+        #mkdir -p $app_path
+fi
+
+cd $app_path
+git pull origin main
+source /var/www/project/flaskapp/flaskvenv/bin/activate
+pip install -r requirements.txt
+echo 'Deployment done' >> $log_file
+"
+exit 0
+##### script deploy.sh end
+
+# jangan lupa beri akses execute, masih ingat perintahnya kan? 
 
 
 
+## Buat jenkins pipeline
+# selanjutnya, kita kembali ke Jenkins
+#- pada Dashboard Jenkins, klik New item, masukkan nama pipeline [username]-flask-tugas-akhir
+#- pilih tipenya : Pipeline (urutan ke-2)
+#- klik tombol OK
+#- berikutnya akan ada konfigurasi yang perlu kita sesuaikan, description silakan boleh diisi boleh juga tidak,
+#- scroll ke bawah, pada bagian pipeline isikan script berikut
+
+
+// Jenkins pipeline start
+// mulai deklarasi pipeline
+pipeline {
+    // jalankan di agent mana pun
+    agent any
+
+    // deklarasikan beberapa stage
+    stages {
+        // stage 1 Pull repo
+        stage('Pull') {
+          steps {
+            // pull repo dari git, perhatikan credentialsId dan GitHub URL
+            git branch: 'main', credentialsId: '[username]-ssh-key', url: 'git@github.com:[username-github]/flask-tugas-akhir-nest.git'
+          }
+        }
+        // stage demo, untuk menjalankan beberapa perintah, silakan ubah jika diperlukan
+        stage('Hello') {
+            steps {
+                echo 'Hello World'
+                sh "ls -lha"
+                sh "pip3 install -r requirements.txt"
+                echo "another"
+            }
+        }
+        // stage deploy ini menggunakan ssh agent plugin untuk menjalankan script yang ada di server
+        stage('deploy') {
+                steps {
+                sshagent(credentials : ['[username]-ssh-key']) {
+                    sh 'ssh -tt -vv student@[ip-node1] -o StrictHostKeyChecking=no "/home/student/deploy.sh"'
+                }
+                }
+            }
+    }
+  // ini tambahan, jika Anda ingin membuat notifikasi menggunakan discord Channel, 
+  // 
+  //post {
+  //  always {
+  //    discordSend description: "App with build number ${env.BUILD_DISPLAY_NAME} is ${currentBuild.currentResult}", enableArtifactsList: false, footer: "Triggered in branch main with revision blabla", image: '', result: currentBuild.currentResult, scmWebUrl: '', thumbnail: '', link: "${env.RUN_DISPLAY_URL}", title: "${env.JOB_NAME}", webhookURL: "${DISCORD_WEBHOOK_URL}"
+  //}
+  //}
+}
+// Jenkins pipeline end
+
+#- sesuaikan beberapa bagian, seperti URL repo, ip-node1 & credential
+#- kemudian klik Save
+#- jika sudah, klik tombol Build Now untuk mulai menjalankan pipeline
+#- jika semuanya berjalan lancar, warna yang akan ditampilkan berwarna Hijau. 
+#- jika terdapat error, dan ingin memperbaiki, klik tombol Configure, lalu edit pipeline-nya, Save dan coba jalankan kembali
+#- begitu seterusnya, selamat mengerjakan.

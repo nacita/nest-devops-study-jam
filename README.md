@@ -9,11 +9,16 @@ LAB list: [di sini](https://docs.google.com/spreadsheets/d/1xqCsKCi0bHOcBDXdVTo4
 
 ## Tugas Akhir
 
-Untuk menyelesaikan StudyJam ini, peserta harus mengerjakan beberapa task berikut:
+Untuk menyelesaikan StudyJam ini dan mendapatkan sertifikat, peserta harus mengerjakan beberapa task berikut:
 
 - [ ] buat virtualhost untuk Grafana dengan format http://grafana.[nama].yes
 - [ ] Fork repo berikut [Flask Example App](https://github.com/samsuldemo/Flask-Example), 
 - [ ] Clone repo hasil fork https://github.com/[username]/flask-nest-api, install di node1 dan gunakan sub domain flask-example.[nama].yes
 - [ ] Setup Jenkins pipeline untuk repo tersebut, beri nama [nama]-flask-nest
 - [ ] Buat autodeploy dari Jenkins ke server
-- [ ] Buat screenshot untuk tiap task di atas. 
+- [ ] Buat screenshot untuk tiap task di atas. compress dalam format zip, lalu upload ke [formulir berikut](https://forms.gle/uwsHDwngS5y8sWYB8)
+
+ketentuan:
+
+- [ ] Kerjakan sebelum tanggal 2 Juni 2023, karena VM ada didestroy setelah tanggal tersebut
+- [ ] Jika sampai tanggal 2 juni 2023 belum selesai mengerjakan, silakan kerjakan tugas akhir ini menggunakan VM sendiri
