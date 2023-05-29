@@ -16,7 +16,7 @@ Untuk menyelesaikan StudyJam ini dan mendapatkan sertifikat, peserta harus menge
 - [ ] Clone repo hasil fork https://github.com/[username]/flask-nest-api, install di node1 dan gunakan sub domain flask-example.[nama].yes
 - [ ] Setup Jenkins pipeline untuk repo tersebut, beri nama [nama]-flask-nest
 - [ ] Buat autodeploy dari Jenkins ke server
-- [ ] Buat screenshot untuk tiap task di atas. upload ke folder google drive, lalu paste link folder tersebut ke [formulir berikut](https://forms.gle/uwsHDwngS5y8sWYB8)
+- [ ] Buat screenshot untuk tiap task di atas. upload ke folder google drive, lalu paste link folder tersebut ke [formulir berikut](https://forms.gle/uwsHDwngS5y8sWYB8), pastikan link diset public/anyone with the link!
 
 ketentuan:
 
